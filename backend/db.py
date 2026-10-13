@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
+from pathlib import Path
+
+# Carga .env buscando en la carpeta backend o en la raíz
+load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv()
 
 DATABASE_URL = os.environ["DATABASE_URL"]

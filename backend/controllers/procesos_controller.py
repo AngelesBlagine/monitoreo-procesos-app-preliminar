@@ -1,0 +1,172 @@
+import time
+import psutil
+
+try:
+    from db import pool
+except ImportError:
+    from backend.db import pool
+
+def listar_procesos():
+    # La primera medición de CPU siempre da 0, entonces se hace una medición inicial para despues tener el valor correcto
+    for p in psutil.process_iter():
+        try:
+            p.cpu_percent(None)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+    time.sleep(0.5) # Espera para obtener un valor de CPU más preciso
+
+    procesos = []
+    cant_nucleos = psutil.cpu_count() or 1
+    for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+        # Ignora el proceso del sistema que da valores raros
+        if p.info['pid'] == 0:
+            continue
+        procesos.append({
+            'pid': p.info['pid'],
+            'name': p.info['name'],
+            'cpu_percent': (p.info['cpu_percent'] or 0) / cant_nucleos,
+            'memory_percent': p.info['memory_percent'] or 0,
+        })
+    return procesos
+
+def _agrupar_por_nombre(procesos):
+    # Agrupa los procesos que tengan el mismo nombre y suma sus valores de CPU y memoria
+    grupos = {}
+    for proceso in procesos:
+        grupo = grupos.setdefault(proceso['name'], {
+            'name': proceso['name'],
+            'pids': [],
+            'cpu_percent': 0.0,
+            'memory_percent': 0.0,
+        })
+        grupo['pids'].append(proceso['pid'])
+        grupo['cpu_percent'] += proceso['cpu_percent']
+        grupo['memory_percent'] += proceso['memory_percent']
+
+    for grupo in grupos.values():
+        grupo['cpu_percent'] = round(grupo['cpu_percent'], 2)
+        grupo['memory_percent'] = round(grupo['memory_percent'], 2)
+
+    return list(grupos.values())
+
+def buscar_proceso_en_sistema(nombre: str):
+    """
+    Busca si un proceso específico está en ejecución y agrupa sus métricas.
+    Permite coincidencia con o sin extensión .exe (no sensible a mayúsculas).
+    """
+    nombre_limpio = nombre.strip().lower()
+    variantes = {nombre_limpio}
+    if not nombre_limpio.endswith(".exe"):
+        variantes.add(f"{nombre_limpio}.exe")
+
+    for proc in _agrupar_por_nombre(listar_procesos()):
+        if proc["name"].lower() in variantes:
+            return proc
+    return None
+
+def _asegurar_pool_abierto():
+    """Abre el pool de conexiones si aún no fue abierto."""
+    if not getattr(pool, '_opened', False):
+        pool.open()
+
+def verificar_y_actualizar_proceso(nombre: str = None):
+    """
+    Pregunta por el nombre de un proceso (o usa el parámetro si se provee) y:
+    - Si está en el sistema pero NO en la base de datos: lo registra con estado 'activo' y guarda métricas en historial.
+    - Si NO está en el sistema pero SÍ en la base de datos: notifica el cambio y actualiza el estado a 'inactivo'.
+    - Si está en el sistema Y en la base de datos: asegura estado 'activo' y registra métricas actuales en historial.
+    - Si no está en el sistema ni en la base de datos: notifica que no existe.
+    """
+    if not nombre:
+        nombre = input("Ingrese el nombre del proceso a buscar/monitorear (ej. explorer.exe): ").strip()
+
+    if not nombre:
+        print("No se ingresó ningún nombre de proceso.")
+        return None
+
+    # 1. Buscar en el sistema operativo
+    proceso_sistema = buscar_proceso_en_sistema(nombre)
+
+    # Nombres posibles para consultar en la base de datos
+    nombre_busqueda = proceso_sistema["name"] if proceso_sistema else nombre
+    variantes_db = [nombre_busqueda.lower()]
+    if not nombre_busqueda.lower().endswith(".exe"):
+        variantes_db.append(f"{nombre_busqueda.lower()}.exe")
+
+    _asegurar_pool_abierto()
+    with pool.connection() as conn:
+        with conn.cursor() as cur:
+                # 2. Consultar si ya existe en la base de datos
+                cur.execute(
+                    "SELECT id, nombre, estado FROM procesos WHERE LOWER(nombre) = ANY(%s)",
+                    (variantes_db,)
+                )
+                db_proceso = cur.fetchone()
+
+                # Caso 1: Está en el sistema pero NO en la base de datos
+                if proceso_sistema and not db_proceso:
+                    cur.execute(
+                        "INSERT INTO procesos (nombre, estado) VALUES (%s, %s) RETURNING id, nombre, estado",
+                        (proceso_sistema["name"], "activo")
+                    )
+                    nuevo = cur.fetchone()
+                    proceso_id = nuevo["id"]
+
+                    # Registrar métricas iniciales en historial
+                    cur.execute(
+                        "INSERT INTO historial (proceso_id, ram_porcentaje, cpu_porcentaje) VALUES (%s, %s, %s)",
+                        (proceso_id, proceso_sistema["memory_percent"], proceso_sistema["cpu_percent"])
+                    )
+                    conn.commit()
+
+                    print(f"\n[NUEVO] El proceso '{proceso_sistema['name']}' fue encontrado en ejecución en el sistema.")
+                    print(f"-> Guardado en la base de datos con estado: 'activo'")
+                    print(f"-> Métricas iniciales: CPU {proceso_sistema['cpu_percent']}% | RAM {proceso_sistema['memory_percent']}% (PIDs: {proceso_sistema['pids']})")
+                    return nuevo
+
+                # Caso 2: NO está en el sistema pero SÍ en la base de datos
+                elif not proceso_sistema and db_proceso:
+                    estado_anterior = db_proceso["estado"]
+                    if estado_anterior != "inactivo":
+                        cur.execute(
+                            "UPDATE procesos SET estado = 'inactivo' WHERE id = %s RETURNING id, nombre, estado",
+                            (db_proceso["id"],)
+                        )
+                        actualizado = cur.fetchone()
+                        conn.commit()
+                        print(f"\n[ALERTA] El proceso '{db_proceso['nombre']}' NO se encuentra en ejecución en el sistema.")
+                        print(f"-> Estaba registrado con estado '{estado_anterior}'. Se actualizó su estado a 'inactivo' en la base de datos.")
+                        return actualizado
+                    else:
+                        print(f"\n[INFO] El proceso '{db_proceso['nombre']}' está registrado en la base de datos pero sigue sin ejecutarse (estado: 'inactivo').")
+                        return db_proceso
+
+                # Caso 3: SÍ está en el sistema Y SÍ en la base de datos
+                elif proceso_sistema and db_proceso:
+                    proceso_id = db_proceso["id"]
+                    estado_anterior = db_proceso["estado"]
+
+                    if estado_anterior != "activo":
+                        cur.execute(
+                            "UPDATE procesos SET estado = 'activo' WHERE id = %s RETURNING id, nombre, estado",
+                            (proceso_id,)
+                        )
+                        conn.commit()
+                        print(f"\n[REACTIVADO] El proceso '{db_proceso['nombre']}' volvió a encontrarse en el sistema.")
+                        print(f"-> Estado actualizado de '{estado_anterior}' a 'activo' en la base de datos.")
+                    else:
+                        print(f"\n[EN EJECUCIÓN] El proceso '{db_proceso['nombre']}' continúa activo en el sistema.")
+
+                    # Registrar nuevas métricas en historial
+                    cur.execute(
+                        "INSERT INTO historial (proceso_id, ram_porcentaje, cpu_porcentaje) VALUES (%s, %s, %s)",
+                        (proceso_id, proceso_sistema["memory_percent"], proceso_sistema["cpu_percent"])
+                    )
+                    conn.commit()
+                    print(f"-> Métricas registradas: CPU {proceso_sistema['cpu_percent']}% | RAM {proceso_sistema['memory_percent']}% (PIDs: {proceso_sistema['pids']})")
+                    return db_proceso
+
+                # Caso 4: NO está en el sistema NI en la base de datos
+                else:
+                    print(f"\n[NO ENCONTRADO] El proceso '{nombre}' no está ejecutándose en el sistema ni se encuentra registrado en la base de datos.")
+                    return None
