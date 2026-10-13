@@ -170,3 +170,53 @@ def verificar_y_actualizar_proceso(nombre: str = None):
                 else:
                     print(f"\n[NO ENCONTRADO] El proceso '{nombre}' no está ejecutándose en el sistema ni se encuentra registrado en la base de datos.")
                     return None
+
+def obtener_procesos_db():
+    """
+    Obtiene la lista de procesos registrados en la base de datos.
+    """
+    _asegurar_pool_abierto()
+    with pool.connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, nombre, estado FROM procesos ORDER BY nombre ASC;")
+            return cur.fetchall()
+
+def eliminar_proceso_db(nombre: str = None):
+    """
+    Elimina un proceso de la base de datos (tabla procesos).
+    Por las restricciones ON DELETE CASCADE, también se eliminan sus registros en historial.
+    """
+    if not nombre:
+        nombre = input("\nIngrese el nombre del proceso a eliminar de la base de datos (ej. explorer.exe): ").strip()
+
+    if not nombre:
+        print("No se ingresó ningún nombre de proceso.")
+        return False
+
+    nombre_limpio = nombre.strip().lower()
+    variantes_db = [nombre_limpio]
+    if not nombre_limpio.endswith(".exe"):
+        variantes_db.append(f"{nombre_limpio}.exe")
+
+    _asegurar_pool_abierto()
+    with pool.connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, nombre, estado FROM procesos WHERE LOWER(nombre) = ANY(%s)",
+                (variantes_db,)
+            )
+            proceso = cur.fetchone()
+
+            if not proceso:
+                print(f"\n[NO ENCONTRADO] El proceso '{nombre}' no está registrado en la base de datos.")
+                return False
+
+            confirmar = input(f"¿Confirmar la eliminación de '{proceso['nombre']}' (estado: {proceso['estado']}) y su historial? (s/n): ").strip().lower()
+            if confirmar in ("s", "si", "y", "yes"):
+                cur.execute("DELETE FROM procesos WHERE id = %s RETURNING nombre;", (proceso["id"],))
+                conn.commit()
+                print(f"\n[ELIMINADO] El proceso '{proceso['nombre']}' fue eliminado exitosamente de la base de datos.")
+                return True
+            else:
+                print("\nOperación cancelada. El proceso no fue eliminado.")
+                return False
