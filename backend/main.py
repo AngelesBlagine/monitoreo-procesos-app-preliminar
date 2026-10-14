@@ -1,7 +1,18 @@
+from contextlib import asynccontextmanager
+from db import pool
 from controllers import procesos_controller
 from fastapi import FastAPI
 
-app = FastAPI()
+# Ciclo de vida (Lifespan) de FastAPI, inicializa y cierra el pool de conexiones al iniciar y apagar la aplicación
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Esto ocurre al iniciar la aplicación
+    await pool.open()
+    yield
+    # Esto ocurre al apagar la aplicación
+    await pool.close()
+
+app = FastAPI(lifespan=lifespan)
 
 def mostrar_tabla_procesos(procesos):
     """Muestra una lista de procesos agrupados con formato de tabla."""
