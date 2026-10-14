@@ -4,19 +4,21 @@ from controllers import procesos_controller
 from routers import procesos_router
 from fastapi import FastAPI
 
+#-----------API----------------
 # Ciclo de vida (Lifespan) de FastAPI, inicializa y cierra el pool de conexiones al iniciar y apagar la aplicación
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Esto ocurre al iniciar la aplicación
-    pool.open()
-    yield
-    # Esto ocurre al apagar la aplicación
-    pool.close()
+    pool.open(wait=True)
+    try:
+        yield
+    finally: 
+        pool.close()
 
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(procesos_router.router, prefix="/procesos", tags=["Procesos"])
 
+#----------CLI DE PRUEBA--------
 def mostrar_tabla_procesos(procesos):
     """Muestra una lista de procesos agrupados con formato de tabla."""
     print(f"\n{'NOMBRE':<35} | {'PIDs':<20} | {'CPU (%)':<8} | {'RAM (%)':<8}")
@@ -47,8 +49,8 @@ def menu():
 
         if opcion == "1":
             print("\nObteniendo y calculando métricas de procesos en el sistema...")
-            raw = procesos_controller.listar_procesos()
-            agrupados = procesos_controller._agrupar_por_nombre(raw)
+            raw = procesos_controller.listar_procesos_sistema()
+            agrupados = procesos_controller._agrupar_procesos_por_nombre(raw)
             agrupados.sort(key=lambda x: x["name"].lower())
             mostrar_tabla_procesos(agrupados)
 
@@ -69,7 +71,7 @@ def menu():
                 print(f"\n[NO ENCONTRADO] El proceso '{nombre}' no está ejecutándose en el sistema.")
 
         elif opcion == "3":
-            procesos_controller.verificar_y_actualizar_proceso()
+            procesos_controller.verificar_y_actualizar_proceso_cli()
 
         elif opcion == "4":
             procesos_db = procesos_controller.obtener_procesos_db()
@@ -84,7 +86,7 @@ def menu():
                 print(f"Total en base de datos: {len(procesos_db)}")
 
         elif opcion == "5":
-            procesos_controller.eliminar_proceso_db()
+            procesos_controller.eliminar_proceso_db_cli()
 
         elif opcion == "0":
             print("\nSaliendo del sistema...")
