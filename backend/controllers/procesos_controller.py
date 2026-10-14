@@ -71,6 +71,8 @@ def _asegurar_pool_abierto():
     if not getattr(pool, '_opened', False):
         pool.open()
 
+#------------ENDPOINTS----------------
+
 def crear_proceso_db(nombre: str, estado: str = "desconocido") -> dict:
     """
     Crea un nuevo registro de proceso en la base de datos.
@@ -98,13 +100,15 @@ def obtener_proceso_db(proceso_id: UUID) -> dict | None:
     with pool.connection() as conn:
         return procesos_repositorio.buscar_por_id(conn, proceso_id)
 
-def eliminar_procesos_db(proceso_id: UUID) -> bool:
+def eliminar_proceso_db(proceso_id: UUID) -> bool:
     """
     Eliminar un proceso registrado en la base de datos.
     """
     _asegurar_pool_abierto()
     with pool.connection() as conn:
         return procesos_repositorio.eliminar(conn, proceso_id)
+
+#--------------------CLI-------------------------
 
 def verificar_y_actualizar_proceso_cli(nombre: str = None):
     """
