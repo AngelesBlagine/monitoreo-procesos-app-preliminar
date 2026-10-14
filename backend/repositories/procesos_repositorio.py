@@ -14,5 +14,8 @@ def buscar_por_id(conn, proceso_id):
 def buscar_por_nombre(conn, nombre):
     return conn.execute("SELECT * FROM procesos WHERE nombre = %s", (nombre,)).fetchone()
 
+def listar(conn):
+    return conn.execute("SELECT * FROM procesos").fetchall()
+
 def eliminar(conn, proceso_id):
     return conn.execute("DELETE FROM procesos WHERE id = %s", (proceso_id,)).rowcount > 0

@@ -47,8 +47,8 @@ def menu():
 
         if opcion == "1":
             print("\nObteniendo y calculando métricas de procesos en el sistema...")
-            raw = procesos_controller.listar_procesos()
-            agrupados = procesos_controller._agrupar_por_nombre(raw)
+            raw = procesos_controller.listar_procesos_sistema()
+            agrupados = procesos_controller._agrupar_procesos_por_nombre(raw)
             agrupados.sort(key=lambda x: x["name"].lower())
             mostrar_tabla_procesos(agrupados)
 
@@ -69,7 +69,7 @@ def menu():
                 print(f"\n[NO ENCONTRADO] El proceso '{nombre}' no está ejecutándose en el sistema.")
 
         elif opcion == "3":
-            procesos_controller.verificar_y_actualizar_proceso()
+            procesos_controller.verificar_y_actualizar_proceso_cli()
 
         elif opcion == "4":
             procesos_db = procesos_controller.obtener_procesos_db()
@@ -84,7 +84,7 @@ def menu():
                 print(f"Total en base de datos: {len(procesos_db)}")
 
         elif opcion == "5":
-            procesos_controller.eliminar_proceso_db()
+            procesos_controller.eliminar_proceso_db_cli()
 
         elif opcion == "0":
             print("\nSaliendo del sistema...")
