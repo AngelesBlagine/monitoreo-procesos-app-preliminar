@@ -7,10 +7,10 @@ from fastapi import FastAPI
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Esto ocurre al iniciar la aplicación
-    await pool.open()
+    pool.open()
     yield
     # Esto ocurre al apagar la aplicación
-    await pool.close()
+    pool.close()
 
 app = FastAPI(lifespan=lifespan)
 
