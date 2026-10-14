@@ -7,10 +7,8 @@ from fastapi import FastAPI
 # Ciclo de vida (Lifespan) de FastAPI, inicializa y cierra el pool de conexiones al iniciar y apagar la aplicación
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Esto ocurre al iniciar la aplicación
     pool.open()
     yield
-    # Esto ocurre al apagar la aplicación
     pool.close()
 
 app = FastAPI(lifespan=lifespan)
