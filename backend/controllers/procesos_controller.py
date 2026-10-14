@@ -90,6 +90,14 @@ def obtener_procesos_db() -> list[dict]:
     with pool.connection() as conn:
         return procesos_repositorio.listar(conn)
 
+def obtener_proceso_db(proceso_id: UUID) -> dict | None:
+    """
+    Obtiene un proceso a través de su ID
+    """
+    _asegurar_pool_abierto()
+    with pool.connection() as conn:
+        return procesos_repositorio.buscar_por_id(conn, proceso_id)
+
 def eliminar_procesos_db(proceso_id: UUID) -> bool:
     """
     Eliminar un proceso registrado en la base de datos.
