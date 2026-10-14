@@ -4,17 +4,21 @@ from controllers import procesos_controller
 from routers import procesos_router
 from fastapi import FastAPI
 
+#-----------API----------------
 # Ciclo de vida (Lifespan) de FastAPI, inicializa y cierra el pool de conexiones al iniciar y apagar la aplicación
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    pool.open()
-    yield
-    pool.close()
+    pool.open(wait=True)
+    try:
+        yield
+    finally: 
+        pool.close()
 
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(procesos_router.router, prefix="/procesos", tags=["Procesos"])
 
+#----------CLI DE PRUEBA--------
 def mostrar_tabla_procesos(procesos):
     """Muestra una lista de procesos agrupados con formato de tabla."""
     print(f"\n{'NOMBRE':<35} | {'PIDs':<20} | {'CPU (%)':<8} | {'RAM (%)':<8}")
