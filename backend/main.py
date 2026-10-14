@@ -1,4 +1,7 @@
 from controllers import procesos_controller
+from fastapi import FastAPI
+
+app = FastAPI()
 
 def mostrar_tabla_procesos(procesos):
     """Muestra una lista de procesos agrupados con formato de tabla."""
