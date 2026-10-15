@@ -1,16 +1,49 @@
-# React + Vite
+🚀 Monitoreo Procesos del Sistema (React + Vite)
+Panel de control en tiempo real diseñado para supervisar métricas globales del sistema (CPU, RAM y procesos únicos) y realizar inspecciones detalladas de procesos mediante una interfaz basada en la estructura base del figma y colores a definir.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+📂 Organización de Carpetas del Frontend (src/)
+La arquitectura del proyecto se estructuró bajo un modelo modular por componentes, separando responsabilidades entre vistas principales, lógica de negocio/controladores y elementos visuales reutilizables:
 
-Currently, two official plugins are available:
+src/
+├── componentes/
+│ ├── GraficoIndividual/
+│ │ ├── GraficoIndividual.jsx # Inspección detallada y barras de recursos por proceso seleccionado
+│ │ └── GraficoIndividual.css # Estilos con scroll estético y contención de PIDs largos (hay que modficar el color de la barra de scroll)
+│ ├── Navbar/
+│ │ ├── Navbar.jsx # Barra superior con estado de conexión del backend (proximamente seccion para el usuario)
+│ │ └── Navbar.css # Estilos de la barra de navegación
+│ ├── PoligonoRecursos/
+│ │ ├── PoligonoRecursos.jsx # Gráfico de series temporales SVG (CPU y RAM) con buffer FIFo (mustrea los primeros 30)
+│ │ └── PoligonoRecursos.css # Estilo
+│ ├── TablaProcesos/
+│ │ ├── TablaProcesos.jsx # Tabla interactiva con ordenamiento, PIDs y estados de procesos (arreglar la busqueda especifica)
+│ │ └── TablaProcesos.css # Estilos responsivos de la tabla de procesos
+│ └── TarjetaMetrica/
+│ ├── TarjetaMetrica.jsx # Tarjetas superiores de métricas globales (CPU, RAM, Procesos)
+│ └── TarjetaMetrica.css # Estilos de tarjetas métricas
+├── controladores/
+│ └── gestorProcesos.js # Lógica de comunicación con el backend (FastAPI / psutil)
+├── App.jsx # Componente raíz: gestión de estados globales, reloj y buffer FIFO temporal
+├── index.css # Estilos globales, variables de tema oscuro y layout principal de dos columnas
+└── main.jsx # Punto de entrada de React / Vite
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+✨ Características Principales y Mejoras Implementadas
+-Gestión Temporal en Memoria (Buffer FIFO de 30 Muestras):
 
-## React Compiler
+-Recopila telemetría en tiempo real desde el backend de FastAPI cada 5 segundos.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+-Mantiene un historial acotado de 30 muestras en memoria local, optimizando el rendimiento gráfico y desplazando los registros antiguos de manera automática.
 
-## Expanding the ESLint configuration
+Visualización Gráfica (Polígono de Recursos):
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+-Gráfico dinámico en SVG nativo optimizado con áreas bajo la curva y gradientes translúcidos.
+
+-Líneas de referencia para umbrales de advertencia y estado crítico configurables.
+
+-Eje X con marcas horarias de referencia y selector interactivo para alternar entre CPU, RAM o ambas métricas simultáneamente.
+
+-Tooltips flotantes interactivos al pasar el cursor sobre los nodos de telemetría.
+
+Layout Adaptativo con Solapa Lateral (sidebar):
+
+-Estructura de dos columnas sincronizada mediante Grid / Flexbox que permite alternar la visualización del panel lateral
