@@ -1,0 +1,169 @@
+.tabla-procesos-container {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: #f1f5f9;
+}
+
+.tabla-header-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .tabla-header-controls {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.tabla-titulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #22d3ee;
+  margin: 0;
+  letter-spacing: 0.025em;
+}
+
+.controles-filtro {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .controles-filtro {
+    width: auto;
+  }
+}
+
+.input-busqueda,
+.select-orden {
+  background-color: #020617;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-busqueda:focus,
+.select-orden:focus {
+  border-color: #06b6d4;
+}
+
+.input-busqueda {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .input-busqueda {
+    width: 12rem;
+  }
+}
+
+.tabla-scroll-wrapper {
+  overflow-x: auto;
+  flex-grow: 1;
+}
+
+.tabla-datos {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabla-datos th {
+  padding: 0.625rem 0.75rem;
+  color: #94a3b8;
+  border-bottom: 1px solid #1e293b;
+  font-weight: 500;
+}
+
+.tabla-datos td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+}
+
+.fila-proceso {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fila-proceso:hover {
+  background-color: rgba(30, 41, 59, 0.6);
+}
+
+.nombre-proceso {
+  font-weight: 500;
+  color: #cffafe;
+}
+
+.fila-proceso:hover .nombre-proceso {
+  color: #22d3ee;
+}
+
+.pids-proceso {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.cpu-proceso {
+  font-family: monospace;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.ram-proceso {
+  font-family: monospace;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.sin-resultados {
+  text-align: center;
+  padding: 1.5rem;
+  color: #64748b;
+}
+.contenedor-boton-desplegar {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.btn-desplegar {
+  background-color: rgba(30, 41, 59, 0.7);
+  border: 1px solid #334155;
+  color: #38bdf8;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-desplegar:hover {
+  background-color: rgba(51, 65, 85, 0.9);
+  border-color: #38bdf8;
+  color: #7dd3fc;
+}
