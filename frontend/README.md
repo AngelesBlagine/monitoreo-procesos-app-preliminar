@@ -7,25 +7,25 @@ La arquitectura del proyecto se estructuró bajo un modelo modular por component
 src/
 ├── componentes/
 │ ├── GraficoIndividual/
-│ │ ├── GraficoIndividual.jsx # Inspección detallada y barras de recursos por proceso seleccionado
-│ │ └── GraficoIndividual.css # Estilos con scroll estético y contención de PIDs largos (hay que modficar el color de la barra de scroll)
+│ │ ├── GraficoIndividual.jsx
+│ │ └── GraficoIndividual.css
 │ ├── Navbar/
-│ │ ├── Navbar.jsx # Barra superior con estado de conexión del backend (proximamente seccion para el usuario)
-│ │ └── Navbar.css # Estilos de la barra de navegación
+│ │ ├── Navbar.jsx
+│ │ └── Navbar.css
 │ ├── PoligonoRecursos/
-│ │ ├── PoligonoRecursos.jsx # Gráfico de series temporales SVG (CPU y RAM) con buffer FIFo (mustrea los primeros 30)
-│ │ └── PoligonoRecursos.css # Estilo
+│ │ ├── PoligonoRecursos.jsx
+│ │ └── PoligonoRecursos.css
 │ ├── TablaProcesos/
-│ │ ├── TablaProcesos.jsx # Tabla interactiva con ordenamiento, PIDs y estados de procesos (arreglar la busqueda especifica)
-│ │ └── TablaProcesos.css # Estilos responsivos de la tabla de procesos
+│ │ ├── TablaProcesos.jsx
+│ │ └── TablaProcesos.css
 │ └── TarjetaMetrica/
-│ ├── TarjetaMetrica.jsx # Tarjetas superiores de métricas globales (CPU, RAM, Procesos)
-│ └── TarjetaMetrica.css # Estilos de tarjetas métricas
+│ ├── TarjetaMetrica.jsx
+│ └── TarjetaMetrica.css
 ├── controladores/
-│ └── gestorProcesos.js # Lógica de comunicación con el backend (FastAPI / psutil)
-├── App.jsx # Componente raíz: gestión de estados globales, reloj y buffer FIFO temporal
-├── index.css # Estilos globales, variables de tema oscuro y layout principal de dos columnas
-└── main.jsx # Punto de entrada de React / Vite
+│ └── gestorProcesos.js
+├── App.jsx
+├── index.css
+└── main.jsx
 
 ✨ Características Principales y Mejoras Implementadas
 -Gestión Temporal en Memoria (Buffer FIFO de 30 Muestras):
