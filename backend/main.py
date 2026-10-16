@@ -1,11 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()  # <-- Esto carga el .env al inicio de todo
+
 from fastapi.middleware.cors import CORSMiddleware  # <-- Importar esto
 from fastapi import FastAPI
 from routers import procesos_router
 from controllers import procesos_controller
 from db import pool
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
-load_dotenv()  # <-- Esto carga el .env al inicio de todo
+
 
 
 # -----------API----------------
